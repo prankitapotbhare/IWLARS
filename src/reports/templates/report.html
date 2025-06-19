@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Train Load Analysis Report</title>
+    <title>IWLARS Train Load Analysis Report</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -64,6 +64,7 @@
             width: 100%;
             left: 0;
         }
+        .qr-section { text-align: center; margin-top: 10mm; }
         ul {
             margin: 5mm 0;
             padding-left: 10mm;
@@ -76,17 +77,27 @@
         <div class="header">
             <h1>IWLARS - Intelligent Wagon Load Analysis & Reporting System</h1>
             <h2>Train Load Analysis Report</h2>
-            <p>Train ID: TR-8901</p>
-            <p>Date: 17 June 2025</p>
-            <p>Total Wagons: 87</p>
+            <p>Date: {{ stats.date if stats.date else '' }}</p>
+            <p>Total Wagons: {{ stats.total_wagons }}</p>
             <h3>Quick Summary</h3>
-            <p>Total Load: 3886.7 tons</p>
-            <p>Total Volume: 5519.9 m³</p>
-            <p>Average Balance Deviation: 2.7%</p>
-            <p>Overloaded Wagons: 4 | Unbalanced Wagons: 3 | Normal Wagons: 73 | Empty Wagons: 7</p>
+            <p>Total Load: {{ '%.1f' % stats.total_load }} tons</p>
+            <p>Total Volume: {{ '%.1f' % stats.total_volume }} m³</p>
+            <p>Average Balance Deviation: {{ '%.1f' % stats.avg_balance }}%</p>
+            <p>
+                Overloaded Wagons: {{ stats.status_counts.get('Overloaded', 0) }} |
+                Unbalanced Wagons: {{ stats.status_counts.get('Unbalanced', 0) }} |
+                Normal Wagons: {{ stats.status_counts.get('Normal', 0) }} |
+                Empty Wagons: {{ stats.status_counts.get('Empty', 0) }}
+            </p>
         </div>
+        {% if qr_code %}
+        <div class="qr-section">
+            <h3>Scan for Online Report</h3>
+            <img src="{{ qr_code }}" alt="QR Code" width="120" height="120"/>
+        </div>
+        {% endif %}
         <div class="footer">
-            Confidential - Aerovania Systems | Page 1 | 17 June 2025
+            Confidential - IWLARS | Page 1
         </div>
     </div>
 
@@ -96,25 +107,28 @@
         <h3>Train Overview</h3>
         <table class="summary-table">
             <tr><th>Metric</th><th>Value</th></tr>
-            <tr><td>Total Wagons</td><td>87</td></tr>
-            <tr><td>Total Estimated Load</td><td>3886.7 tons</td></tr>
-            <tr><td>Total Volume</td><td>5519.9 m³</td></tr>
-            <tr><td>Average Balance Deviation</td><td>2.7%</td></tr>
-            <tr><td>Empty Wagons</td><td>7</td></tr>
-            <tr><td>Overloaded Wagons</td><td>4</td></tr>
-            <tr><td>Unbalanced Wagons</td><td>3</td></tr>
-            <tr><td>Normal Wagons</td><td>73</td></tr>
+            <tr><td>Total Wagons</td><td>{{ stats.total_wagons }}</td></tr>
+            <tr><td>Total Estimated Load</td><td>{{ '%.1f' % stats.total_load }} tons</td></tr>
+            <tr><td>Total Volume</td><td>{{ '%.1f' % stats.total_volume }} m³</td></tr>
+            <tr><td>Average Balance Deviation</td><td>{{ '%.1f' % stats.avg_balance }}%</td></tr>
+            <tr><td>Empty Wagons</td><td>{{ stats.status_counts.get('Empty', 0) }}</td></tr>
+            <tr><td>Overloaded Wagons</td><td>{{ stats.status_counts.get('Overloaded', 0) }}</td></tr>
+            <tr><td>Unbalanced Wagons</td><td>{{ stats.status_counts.get('Unbalanced', 0) }}</td></tr>
+            <tr><td>Normal Wagons</td><td>{{ stats.status_counts.get('Normal', 0) }}</td></tr>
         </table>
         <h3>Wagon Status Distribution</h3>
         <table class="summary-table">
             <tr><th>Status</th><th>Count</th><th>Percentage</th></tr>
-            <tr><td>Normal</td><td>73</td><td>83.9%</td></tr>
-            <tr><td>Empty</td><td>7</td><td>8.0%</td></tr>
-            <tr><td>Overloaded</td><td>4</td><td>4.6%</td></tr>
-            <tr><td>Unbalanced</td><td>3</td><td>3.4%</td></tr>
+            {% for status, count in stats.status_counts.items() %}
+            <tr>
+                <td>{{ status }}</td>
+                <td>{{ count }}</td>
+                <td>{{ '%.1f' % (100 * count / stats.total_wagons) }}%</td>
+            </tr>
+            {% endfor %}
         </table>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 2 | 17 June 2025
+            Confidential - IWLARS | Page 2
         </div>
     </div>
 
@@ -123,17 +137,10 @@
         <h2>Data Visualization 1/5</h2>
         <h3>Pie Chart - Status Distribution</h3>
         <div class="chart-container">
-            <canvas id="statusPieChart" style="max-width: 400px; max-height: 400px;"></canvas>
+            <img src="{{ charts.pie }}" alt="Status Pie Chart" style="max-width: 400px; max-height: 400px;"/>
         </div>
-        <p>Key Insights:</p>
-        <ul>
-            <li>83.9% of wagons are in normal condition</li>
-            <li>7 wagons are empty and available for loading</li>
-            <li>4 wagons exceed safe loading limits</li>
-            <li>Load distribution shows 3 wagons with balance issues</li>
-        </ul>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 3 | 17 June 2025
+            Confidential - IWLARS | Page 3
         </div>
     </div>
 
@@ -142,23 +149,10 @@
         <h2>Data Visualization 2/5</h2>
         <h3>Bar Chart - Volume Distribution</h3>
         <div class="chart-container">
-            <canvas id="volumeBarChart"></canvas>
+            <img src="{{ charts.bar }}" alt="Volume Bar Chart"/>
         </div>
-        <div class="legend">
-            <span style="background-color: #36a2eb;"></span> Normal
-            <span style="background-color: #ffcd56;"></span> Empty
-            <span style="background-color: #ff6384;"></span> Overloaded
-            <span style="background-color: #cc65fe;"></span> Unbalanced
-        </div>
-        <p>Key Insights:</p>
-        <ul>
-            <li>Volume distribution varies significantly across wagons</li>
-            <li>Maximum volume recorded: 109.6 m³</li>
-            <li>Average volume per wagon: 63.4 m³</li>
-            <li>Color coding indicates status-based volume patterns</li>
-        </ul>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 4 | 17 June 2025
+            Confidential - IWLARS | Page 4
         </div>
     </div>
 
@@ -167,17 +161,10 @@
         <h2>Data Visualization 3/5</h2>
         <h3>Line Chart - Balance Deviation Trend</h3>
         <div class="chart-container">
-            <canvas id="balanceLineChart"></canvas>
+            <img src="{{ charts.line }}" alt="Balance Line Chart"/>
         </div>
-        <p>Key Insights:</p>
-        <ul>
-            <li>Balance deviation trends show variation across wagon sequence</li>
-            <li>Left-Right balance generally within acceptable limits</li>
-            <li>Top-Bottom balance shows better stability</li>
-            <li>Peak deviations require attention for safety compliance</li>
-        </ul>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 5 | 17 June 2025
+            Confidential - IWLARS | Page 5
         </div>
     </div>
 
@@ -186,302 +173,48 @@
         <h2>Data Visualization 4/5</h2>
         <h3>Scatter Plot - Weight vs Volume</h3>
         <div class="chart-container">
-            <canvas id="weightVolumeScatter"></canvas>
+            <img src="{{ charts.scatter }}" alt="Weight vs Volume Scatter"/>
         </div>
-        <div class="legend">
-            <span style="background-color: #36a2eb;"></span> Normal
-            <span style="background-color: #ffcd56;"></span> Empty
-            <span style="background-color: #ff6384;"></span> Overloaded
-            <span style="background-color: #cc65fe;"></span> Unbalanced
-        </div>
-        <p>Key Insights:</p>
-        <ul>
-            <li>Strong correlation observed between volume and weight</li>
-            <li>Empty wagons cluster at origin (0,0)</li>
-            <li>Overloaded wagons show high volume-weight values</li>
-            <li>Normal wagons demonstrate consistent load patterns</li>
-        </ul>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 6 | 17 June 2025
+            Confidential - IWLARS | Page 6
         </div>
     </div>
 
     <!-- Page 7: Data Visualization 5/5 - Histogram -->
     <div class="page">
         <h2>Data Visualization 5/5</h2>
-        <h3>Histogram - Weight Distribution</h3>
+        <h3>Histogram - Wagon Volumes</h3>
         <div class="chart-container">
-            <canvas id="weightHistogram"></canvas>
+            <img src="{{ charts.hist }}" alt="Volume Histogram"/>
         </div>
-        <p>Key Insights:</p>
-        <ul>
-            <li>Weight distribution follows expected patterns</li>
-            <li>Most wagons fall within 40-60 ton range</li>
-            <li>Few outliers in extreme weight categories</li>
-            <li>Distribution indicates efficient loading practices</li>
-        </ul>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 7 | 17 June 2025
+            Confidential - IWLARS | Page 7
         </div>
     </div>
 
-    <!-- Page 8: Wagon Analysis - Page 1 of 9 -->
+    <!-- Page 8: Detailed Wagon Analytics -->
     <div class="page">
-        <h2>Wagon Analysis - Page 1 of 9</h2>
-        <h3>Wagons 1 - 10</h3>
+        <h2>Detailed Wagon Analytics</h2>
         <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-001</td><td>66.6 m³</td><td>56.6 tons</td><td>2.8%</td><td>1.9%</td><td>Normal</td></tr>
-            <tr><td>WGN-002</td><td>79.9 m³</td><td>50.1 tons</td><td>2.3%</td><td>1%</td><td>Normal</td></tr>
-            <tr><td>WGN-003</td><td>59.3 m³</td><td>46.5 tons</td><td>1.3%</td><td>0.9%</td><td>Normal</td></tr>
-            <tr><td>WGN-004</td><td>68.8 m³</td><td>39.6 tons</td><td>3.1%</td><td>0.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-005</td><td>58.1 m³</td><td>53.2 tons</td><td>1%</td><td>2.1%</td><td>Normal</td></tr>
-            <tr><td>WGN-006</td><td>71.2 m³</td><td>47.1 tons</td><td>1.8%</td><td>2.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-007</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-008</td><td>56.4 m³</td><td>43.5 tons</td><td>1.4%</td><td>0.1%</td><td>Normal</td></tr>
-            <tr><td>WGN-009</td><td>63.6 m³</td><td>42.1 tons</td><td>3.2%</td><td>2.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-010</td><td>64.6 m³</td><td>36.2 tons</td><td>2.7%</td><td>0.2%</td><td>Normal</td></tr>
+            <tr>
+                <th>Wagon</th>
+                <th>Status</th>
+                <th>Volume (m³)</th>
+                <th>Weight (tons)</th>
+                <th>Centroid</th>
+            </tr>
+            {% for a in analytics %}
+            <tr>
+                <td>{{ a.wagon_id }}</td>
+                <td>{{ a.status }}</td>
+                <td>{{ '%.1f' % a.metrics.volume }}</td>
+                <td>{{ '%.1f' % a.metrics.weight }}</td>
+                <td>{{ a.metrics.centroid }}</td>
+            </tr>
+            {% endfor %}
         </table>
         <div class="footer">
-            Confidential - Aerovania Systems | Page 8 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 9: Wagon Analysis - Page 2 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 2 of 9</h2>
-        <h3>Wagons 11 - 20</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-011</td><td>62.2 m³</td><td>35.4 tons</td><td>1%</td><td>1.8%</td><td>Normal</td></tr>
-            <tr><td>WGN-012</td><td>57.1 m³</td><td>43.4 tons</td><td>0.8%</td><td>0.6%</td><td>Normal</td></tr>
-            <tr><td>WGN-013</td><td>62.2 m³</td><td>38.9 tons</td><td>0.9%</td><td>2.3%</td><td>Normal</td></tr>
-            <tr><td>WGN-014</td><td>65.2 m³</td><td>45.8 tons</td><td>2%</td><td>1.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-015</td><td>61.4 m³</td><td>53.6 tons</td><td>3.9%</td><td>2.4%</td><td>Normal</td></tr>
-            <tr><td>WGN-016</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-017</td><td>57.6 m³</td><td>57.9 tons</td><td>3.6%</td><td>1.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-018</td><td>71.2 m³</td><td>39.6 tons</td><td>1%</td><td>1.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-019</td><td>65.5 m³</td><td>39.4 tons</td><td>2.2%</td><td>1.6%</td><td>Normal</td></tr>
-            <tr><td>WGN-020</td><td>103.7 m³</td><td>78.2 tons</td><td>7.2%</td><td>4%</td><td>Overloaded</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 9 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 10: Wagon Analysis - Page 3 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 3 of 9</h2>
-        <h3>Wagons 21 - 30</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-021</td><td>60.8 m³</td><td>39.4 tons</td><td>1%</td><td>0.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-022</td><td>72.3 m³</td><td>44.8 tons</td><td>3.3%</td><td>2%</td><td>Normal</td></tr>
-            <tr><td>WGN-023</td><td>76.8 m³</td><td>40.4 tons</td><td>8.3%</td><td>4.3%</td><td>Unbalanced</td></tr>
-            <tr><td>WGN-024</td><td>109.6 m³</td><td>67.4 tons</td><td>5.5%</td><td>4.4%</td><td>Overloaded</td></tr>
-            <tr><td>WGN-025</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-026</td><td>67.9 m³</td><td>56.9 tons</td><td>1%</td><td>0.8%</td><td>Normal</td></tr>
-            <tr><td>WGN-027</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-028</td><td>65.2 m³</td><td>56.7 tons</td><td>1.5%</td><td>0.8%</td><td>Normal</td></tr>
-            <tr><td>WGN-029</td><td>69.6 m³</td><td>57.9 tons</td><td>3.4%</td><td>1%</td><td>Normal</td></tr>
-            <tr><td>WGN-030</td><td>67.2 m³</td><td>37.9 tons</td><td>1.6%</td><td>0.6%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 10 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 11: Wagon Analysis - Page 4 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 4 of 9</h2>
-        <h3>Wagons 31 - 40</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-031</td><td>68.4 m³</td><td>42.6 tons</td><td>0.1%</td><td>1.4%</td><td>Normal</td></tr>
-            <tr><td>WGN-032</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-033</td><td>74.8 m³</td><td>37.7 tons</td><td>3.8%</td><td>1%</td><td>Normal</td></tr>
-            <tr><td>WGN-034</td><td>64.9 m³</td><td>58.2 tons</td><td>1.1%</td><td>2.3%</td><td>Normal</td></tr>
-            <tr><td>WGN-035</td><td>75.5 m³</td><td>44 tons</td><td>0.8%</td><td>2.3%</td><td>Normal</td></tr>
-            <tr><td>WGN-036</td><td>76.7 m³</td><td>54.5 tons</td><td>2.1%</td><td>0.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-037</td><td>62.5 m³</td><td>50.4 tons</td><td>1.9%</td><td>1.8%</td><td>Normal</td></tr>
-            <tr><td>WGN-038</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-039</td><td>60.3 m³</td><td>42.4 tons</td><td>0.6%</td><td>0.6%</td><td>Normal</td></tr>
-            <tr><td>WGN-040</td><td>65.6 m³</td><td>35.1 tons</td><td>0.9%</td><td>0.6%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 11 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 12: Wagon Analysis - Page 5 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 5 of 9</h2>
-        <h3>Wagons 41 - 50</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-041</td><td>76.2 m³</td><td>53.7 tons</td><td>0%</td><td>2.1%</td><td>Normal</td></tr>
-            <tr><td>WGN-042</td><td>77.9 m³</td><td>56 tons</td><td>0.8%</td><td>0.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-043</td><td>108.2 m³</td><td>65.3 tons</td><td>6.7%</td><td>3.3%</td><td>Overloaded</td></tr>
-            <tr><td>WGN-044</td><td>61.9 m³</td><td>38.6 tons</td><td>1%</td><td>1.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-045</td><td>64.8 m³</td><td>58.1 tons</td><td>1.1%</td><td>2.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-046</td><td>79.6 m³</td><td>45 tons</td><td>2.6%</td><td>0.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-047</td><td>69.7 m³</td><td>52.6 tons</td><td>1.7%</td><td>2.3%</td><td>Normal</td></tr>
-            <tr><td>WGN-048</td><td>0 m³</td><td>0 tons</td><td>0%</td><td>0%</td><td>Empty</td></tr>
-            <tr><td>WGN-049</td><td>70.9 m³</td><td>40 tons</td><td>1.8%</td><td>0.6%</td><td>Normal</td></tr>
-            <tr><td>WGN-050</td><td>55.1 m³</td><td>47.9 tons</td><td>3.7%</td><td>1.2%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 12 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 13: Wagon Analysis - Page 6 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 6 of 9</h2>
-        <h3>Wagons 51 - 60</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-051</td><td>76.1 m³</td><td>53.4 tons</td><td>0.1%</td><td>1.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-052</td><td>59.7 m³</td><td>38.8 tons</td><td>1.5%</td><td>1.4%</td><td>Normal</td></tr>
-            <tr><td>WGN-053</td><td>79.1 m³</td><td>47.1 tons</td><td>3.3%</td><td>2.4%</td><td>Normal</td></tr>
-            <tr><td>WGN-054</td><td>95.3 m³</td><td>73.3 tons</td><td>4.2%</td><td>4.8%</td><td>Overloaded</td></tr>
-            <tr><td>WGN-055</td><td>75.5 m³</td><td>50.8 tons</td><td>0.5%</td><td>1.8%</td><td>Normal</td></tr>
-            <tr><td>WGN-056</td><td>77.5 m³</td><td>39.6 tons</td><td>3.9%</td><td>1.1%</td><td>Normal</td></tr>
-            <tr><td>WGN-057</td><td>67.2 m³</td><td>54.1 tons</td><td>1.4%</td><td>2.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-058</td><td>74 m³</td><td>44.9 tons</td><td>1.6%</td><td>2.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-059</td><td>75.4 m³</td><td>37.8 tons</td><td>2%</td><td>0.9%</td><td>Normal</td></tr>
-            <tr><td>WGN-060</td><td>62.6 m³</td><td>42 tons</td><td>2.6%</td><td>0%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 13 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 14: Wagon Analysis - Page 7 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 7 of 9</h2>
-        <h3>Wagons 61 - 70</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-061</td><td>75.8 m³</td><td>57 tons</td><td>2.2%</td><td>1%</td><td>Normal</td></tr>
-            <tr><td>WGN-062</td><td>57.3 m³</td><td>51.4 tons</td><td>2.2%</td><td>1.6%</td><td>Normal</td></tr>
-            <tr><td>WGN-063</td><td>58.6 m³</td><td>43.9 tons</td><td>3.1%</td><td>1.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-064</td><td>78.3 m³</td><td>54.1 tons</td><td>4%</td><td>0.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-065</td><td>67.4 m³</td><td>43.3 tons</td><td>0.9%</td><td>1.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-066</td><td>74.3 m³</td><td>55.5 tons</td><td>1.4%</td><td>0%</td><td>Normal</td></tr>
-            <tr><td>WGN-067</td><td>63.6 m³</td><td>40.5 tons</td><td>2%</td><td>1.4%</td><td>Normal</td></tr>
-            <tr><td>WGN-068</td><td>60.7 m³</td><td>41.9 tons</td><td>3.6%</td><td>2.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-069</td><td>62.4 m³</td><td>52.2 tons</td><td>4%</td><td>0.5%</td><td>Normal</td></tr>
-            <tr><td>WGN-070</td><td>71.8 m³</td><td>44.5 tons</td><td>1.8%</td><td>1.6%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 14 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 15: Wagon Analysis - Page 8 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 8 of 9</h2>
-        <h3>Wagons 71 - 80</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-071</td><td>74.1 m³</td><td>58.3 tons</td><td>0.6%</td><td>0.4%</td><td>Normal</td></tr>
-            <tr><td>WGN-072</td><td>66.6 m³</td><td>44.8 tons</td><td>6.6%</td><td>3.3%</td><td>Unbalanced</td></tr>
-            <tr><td>WGN-073</td><td>61 m³</td><td>41.6 tons</td><td>3.1%</td><td>0.3%</td><td>Normal</td></tr>
-            <tr><td>WGN-074</td><td>71.7 m³</td><td>51.8 tons</td><td>3.6%</td><td>0.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-075</td><td>68.5 m³</td><td>54.7 tons</td><td>2.3%</td><td>1.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-076</td><td>67 m³</td><td>49.7 tons</td><td>2.2%</td><td>0.9%</td><td>Normal</td></tr>
-            <tr><td>WGN-077</td><td>75.9 m³</td><td>39.4 tons</td><td>3.6%</td><td>1.3%</td><td>Normal</td></tr>
-            <tr><td>WGN-078</td><td>60.9 m³</td><td>55.6 tons</td><td>3.3%</td><td>2.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-079</td><td>61.9 m³</td><td>37.3 tons</td><td>3.2%</td><td>2.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-080</td><td>56.3 m³</td><td>39 tons</td><td>1.4%</td><td>0%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 15 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 16: Wagon Analysis - Page 9 of 9 -->
-    <div class="page">
-        <h2>Wagon Analysis - Page 9 of 9</h2>
-        <h3>Wagons 81 - 87</h3>
-        <table class="wagon-table">
-            <tr><th>Wagon ID</th><th>Volume</th><th>Weight</th><th>L-R Balance</th><th>T-B Balance</th><th>Status</th></tr>
-            <tr><td>WGN-081</td><td>71.2 m³</td><td>59.7 tons</td><td>0.6%</td><td>1.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-082</td><td>67.1 m³</td><td>59.6 tons</td><td>3.4%</td><td>2.1%</td><td>Normal</td></tr>
-            <tr><td>WGN-083</td><td>62.1 m³</td><td>59.4 tons</td><td>0.8%</td><td>1.2%</td><td>Normal</td></tr>
-            <tr><td>WGN-084</td><td>65.2 m³</td><td>57.5 tons</td><td>7.5%</td><td>5%</td><td>Unbalanced</td></tr>
-            <tr><td>WGN-085</td><td>61 m³</td><td>35.1 tons</td><td>1.6%</td><td>1.1%</td><td>Normal</td></tr>
-            <tr><td>WGN-086</td><td>56.4 m³</td><td>53.7 tons</td><td>3.2%</td><td>1.7%</td><td>Normal</td></tr>
-            <tr><td>WGN-087</td><td>63.4 m³</td><td>52.8 tons</td><td>1.7%</td><td>1.2%</td><td>Normal</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 16 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 17: Statistical Analysis & Data Summary -->
-    <div class="page">
-        <h2>Statistical Analysis & Data Summary</h2>
-        <h3>Statistical Summary</h3>
-        <table class="summary-table">
-            <tr><th>Metric</th><th>Mean</th><th>Min</th><th>Max</th><th>Std Dev</th></tr>
-            <tr><td>Volume (m³)</td><td>69.00</td><td>55.10</td><td>109.60</td><td>10.49</td></tr>
-            <tr><td>Weight (tons)</td><td>48.58</td><td>35.10</td><td>78.20</td><td>9.00</td></tr>
-            <tr><td>L-R Balance (%)</td><td>2.23</td><td>0.00</td><td>8.30</td><td>1.77</td></tr>
-        </table>
-        <h3>Raw Data Summary</h3>
-        <table class="summary-table">
-            <tr><th>Data Point</th><th>Count</th><th>Description</th></tr>
-            <tr><td>Total Measurements</td><td>522</td><td>Volume, Weight, L-R Balance, T-B Balance, Status, ID</td></tr>
-            <tr><td>LiDAR Scans</td><td>87</td><td>High-resolution 3D point cloud data</td></tr>
-            <tr><td>IMU Readings</td><td>261</td><td>Acceleration, gyroscope, magnetometer</td></tr>
-            <tr><td>Load Sensors</td><td>87</td><td>Strain gauge weight measurements</td></tr>
-            <tr><td>Balance Calculations</td><td>174</td><td>Left-right and top-bottom deviation</td></tr>
-            <tr><td>Status Classifications</td><td>87</td><td>Automated status determination</td></tr>
-        </table>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 17 | 17 June 2025
-        </div>
-    </div>
-
-    <!-- Page 18: Report Summary & Certification -->
-    <div class="page">
-        <h2>Report Summary & Certification</h2>
-        <h3>Summary Remarks</h3>
-        <p>This comprehensive report is auto-generated by the Aerovania Intelligent Wagon Load System.</p>
-        <p>All data is derived from LiDAR + IMU scans and analyzed for load safety compliance.</p>
-        <p>Advanced statistical analysis and multiple visualization techniques provide complete insights.</p>
-        <p>Analysis completed for Train TR-8901 on 17 June 2025.</p>
-        <p>Total of 87 wagons analyzed with 73 in normal condition.</p>
-        <h3>Key Findings:</h3>
-        <ul>
-            <li>Load efficiency: 79.3%</li>
-            <li>Average balance deviation: 2.7%</li>
-            <li>Safety compliance: 95.4%</li>
-        </ul>
-        <h3>Recommendations:</h3>
-        <ul>
-            <li>7 empty wagons identified for potential loading optimization</li>
-            <li>4 overloaded wagons require immediate attention</li>
-            <li>3 unbalanced wagons need load redistribution</li>
-        </ul>
-        <p>This report includes 5 different chart types for comprehensive data visualization:</p>
-        <ul>
-            <li>Pie charts for categorical distribution</li>
-            <li>Bar charts for volume analysis</li>
-            <li>Line charts for trend analysis</li>
-            <li>Scatter plots for correlation analysis</li>
-            <li>Histograms for frequency distribution</li>
-        </ul>
-        <p>This report meets railway safety compliance standards and regulations.</p>
-        <h3>Certification</h3>
-        <p>Authorized by: Aerovania Intelligent Systems</p>
-        <p>Date: 17 June 2025</p>
-        <p>Digital Signature: [Signature Placeholder]</p>
-        <p>Scan for cloud report: [QR Code Placeholder]</p>
-        <div class="footer">
-            Confidential - Aerovania Systems | Page 18 | 17 June 2025
+            Confidential - IWLARS | Page 8
         </div>
     </div>
 
