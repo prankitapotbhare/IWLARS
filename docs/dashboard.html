@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IWLARS - Train Load Analysis Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom styles to complement Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #d1d5db; /* text-gray-300 */
+        }
+        .card {
+            background-color: #1f2937; /* bg-gray-800 */
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 1px solid #374151; /* border-gray-700 */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        /* Custom scrollbar for a more modern look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Header Section -->
+        <header class="mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Train Load Analysis Dashboard</h1>
+                    <p class="text-gray-400 mt-1">System: IWLARS - Intelligent Wagon Load Analysis & Reporting</p>
+                </div>
+                <div class="text-sm text-gray-400 mt-4 sm:mt-0 text-left sm:text-right">
+                    <p><span class="font-semibold text-white">Train ID:</span> TR-8901</p>
+                    <p><span class="font-semibold text-white">Date:</span> 17 June 2025</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Key Metrics Summary Cards -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <div class="card p-5 flex flex-col justify-between">
+                <h3 class="font-semibold text-gray-400">Total Wagons</h3>
+                <p class="text-4xl font-bold text-white">87</p>
+            </div>
+            <div class="card p-5 flex flex-col justify-between">
+                <h3 class="font-semibold text-gray-400">Total Load</h3>
+                <p class="text-4xl font-bold text-white">3,887<span class="text-2xl text-gray-400"> tons</span></p>
+            </div>
+            <div class="card p-5 flex flex-col justify-between">
+                <h3 class="font-semibold text-gray-400">Total Volume</h3>
+                <p class="text-4xl font-bold text-white">5,520<span class="text-2xl text-gray-400"> m³</span></p>
+            </div>
+            <div class="card p-5 flex flex-col justify-between">
+                <h3 class="font-semibold text-gray-400">Avg. Balance Dev.</h3>
+                <p class="text-4xl font-bold text-white">2.7<span class="text-2xl text-gray-400">%</span></p>
+            </div>
+        </section>
+
+        <!-- Charts and Visualizations -->
+        <section class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Wagon Status Distribution -->
+            <div class="card lg:col-span-2 p-6">
+                <h3 class="text-xl font-semibold mb-4 text-white">Wagon Status Distribution</h3>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="statusPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Weight vs Volume Correlation -->
+            <div class="card lg:col-span-3 p-6">
+                <h3 class="text-xl font-semibold mb-4 text-white">Weight vs Volume Correlation</h3>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="weightVolumeScatterPlot"></canvas>
+                </div>
+            </div>
+
+            <!-- Balance Deviation Trend -->
+            <div class="card lg:col-span-5 p-6">
+                <h3 class="text-xl font-semibold mb-4 text-white">Balance Deviation Trend (Full Train)</h3>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="balanceTrendLineChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Detailed Wagon Analysis Table -->
+        <section class="card p-4 sm:p-6">
+            <h3 class="text-xl font-semibold mb-4 text-white">Detailed Wagon Analysis</h3>
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="w-full text-sm text-left text-gray-300">
+                    <thead class="text-xs text-gray-400 uppercase bg-gray-900 sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 rounded-l-lg">Wagon ID</th>
+                            <th scope="col" class="px-6 py-3">Volume (m³)</th>
+                            <th scope="col" class="px-6 py-3">Weight (tons)</th>
+                            <th scope="col" class="px-6 py-3">L-R Balance (%)</th>
+                            <th scope="col" class="px-6 py-3">T-B Balance (%)</th>
+                            <th scope="col" class="px-6 py-3 rounded-r-lg">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wagon-table-body">
+                        <!-- Wagon data will be injected here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>Confidential - Aerovania Systems | Generated on 17 June 2025</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- DATA ---
+        // This is the full dataset extracted from the provided PDF.
+        const wagonData = [
+            { id: 'WGN-001', volume: 66.6, weight: 56.6, lrBalance: 2.8, tbBalance: 1.9, status: 'Normal' },
+            { id: 'WGN-002', volume: 79.9, weight: 50.1, lrBalance: 2.3, tbBalance: 1.0, status: 'Normal' },
+            { id: 'WGN-003', volume: 59.3, weight: 46.5, lrBalance: 1.3, tbBalance: 0.9, status: 'Normal' },
+            { id: 'WGN-004', volume: 68.8, weight: 39.6, lrBalance: 3.1, tbBalance: 0.2, status: 'Normal' },
+            { id: 'WGN-005', volume: 58.1, weight: 53.2, lrBalance: 1.0, tbBalance: 2.1, status: 'Normal' },
+            { id: 'WGN-006', volume: 71.2, weight: 47.1, lrBalance: 1.8, tbBalance: 2.5, status: 'Normal' },
+            { id: 'WGN-007', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-008', volume: 56.4, weight: 43.5, lrBalance: 1.4, tbBalance: 0.1, status: 'Normal' },
+            { id: 'WGN-009', volume: 63.6, weight: 42.1, lrBalance: 3.2, tbBalance: 2.2, status: 'Normal' },
+            { id: 'WGN-010', volume: 64.6, weight: 36.2, lrBalance: 2.7, tbBalance: 0.2, status: 'Normal' },
+            { id: 'WGN-011', volume: 62.2, weight: 35.4, lrBalance: 1.0, tbBalance: 1.8, status: 'Normal' },
+            { id: 'WGN-012', volume: 57.1, weight: 43.4, lrBalance: 0.8, tbBalance: 0.6, status: 'Normal' },
+            { id: 'WGN-013', volume: 62.2, weight: 38.9, lrBalance: 0.9, tbBalance: 2.3, status: 'Normal' },
+            { id: 'WGN-014', volume: 65.2, weight: 45.8, lrBalance: 2.0, tbBalance: 1.5, status: 'Normal' },
+            { id: 'WGN-015', volume: 61.4, weight: 53.6, lrBalance: 3.9, tbBalance: 2.4, status: 'Normal' },
+            { id: 'WGN-016', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-017', volume: 57.6, weight: 57.9, lrBalance: 3.6, tbBalance: 1.5, status: 'Normal' },
+            { id: 'WGN-018', volume: 71.2, weight: 39.6, lrBalance: 1.0, tbBalance: 1.7, status: 'Normal' },
+            { id: 'WGN-019', volume: 65.5, weight: 39.4, lrBalance: 2.2, tbBalance: 1.6, status: 'Normal' },
+            { id: 'WGN-020', volume: 103.7, weight: 78.2, lrBalance: 7.2, tbBalance: 4.0, status: 'Overloaded' },
+            { id: 'WGN-021', volume: 60.8, weight: 39.4, lrBalance: 1.0, tbBalance: 0.7, status: 'Normal' },
+            { id: 'WGN-022', volume: 72.3, weight: 44.8, lrBalance: 3.3, tbBalance: 2.0, status: 'Normal' },
+            { id: 'WGN-023', volume: 76.8, weight: 40.4, lrBalance: 8.3, tbBalance: 4.3, status: 'Unbalanced' },
+            { id: 'WGN-024', volume: 109.6, weight: 67.4, lrBalance: 5.5, tbBalance: 4.4, status: 'Overloaded' },
+            { id: 'WGN-025', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-026', volume: 67.9, weight: 56.9, lrBalance: 1.0, tbBalance: 0.8, status: 'Normal' },
+            { id: 'WGN-027', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-028', volume: 65.2, weight: 56.7, lrBalance: 1.5, tbBalance: 0.8, status: 'Normal' },
+            { id: 'WGN-029', volume: 69.6, weight: 57.9, lrBalance: 3.4, tbBalance: 1.0, status: 'Normal' },
+            { id: 'WGN-030', volume: 67.2, weight: 37.9, lrBalance: 1.6, tbBalance: 0.6, status: 'Normal' },
+            { id: 'WGN-031', volume: 68.4, weight: 42.6, lrBalance: 0.1, tbBalance: 1.4, status: 'Normal' },
+            { id: 'WGN-032', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-033', volume: 74.8, weight: 37.7, lrBalance: 3.8, tbBalance: 1.0, status: 'Normal' },
+            { id: 'WGN-034', volume: 64.9, weight: 58.2, lrBalance: 1.1, tbBalance: 2.3, status: 'Normal' },
+            { id: 'WGN-035', volume: 75.5, weight: 44.0, lrBalance: 0.8, tbBalance: 2.3, status: 'Normal' },
+            { id: 'WGN-036', volume: 76.7, weight: 54.5, lrBalance: 2.1, tbBalance: 0.7, status: 'Normal' },
+            { id: 'WGN-037', volume: 62.5, weight: 50.4, lrBalance: 1.9, tbBalance: 1.8, status: 'Normal' },
+            { id: 'WGN-038', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-039', volume: 60.3, weight: 42.4, lrBalance: 0.6, tbBalance: 0.6, status: 'Normal' },
+            { id: 'WGN-040', volume: 65.6, weight: 35.1, lrBalance: 0.9, tbBalance: 0.6, status: 'Normal' },
+            { id: 'WGN-041', volume: 76.2, weight: 53.7, lrBalance: 0.0, tbBalance: 2.1, status: 'Normal' },
+            { id: 'WGN-042', volume: 77.9, weight: 56.0, lrBalance: 0.8, tbBalance: 0.5, status: 'Normal' },
+            { id: 'WGN-043', volume: 108.2, weight: 65.3, lrBalance: 6.7, tbBalance: 3.3, status: 'Overloaded' },
+            { id: 'WGN-044', volume: 61.9, weight: 38.6, lrBalance: 1.0, tbBalance: 1.2, status: 'Normal' },
+            { id: 'WGN-045', volume: 64.8, weight: 58.1, lrBalance: 1.1, tbBalance: 2.5, status: 'Normal' },
+            { id: 'WGN-046', volume: 79.6, weight: 45.0, lrBalance: 2.6, tbBalance: 0.5, status: 'Normal' },
+            { id: 'WGN-047', volume: 69.7, weight: 52.6, lrBalance: 1.7, tbBalance: 2.3, status: 'Normal' },
+            { id: 'WGN-048', volume: 0.0, weight: 0.0, lrBalance: 0.0, tbBalance: 0.0, status: 'Empty' },
+            { id: 'WGN-049', volume: 70.9, weight: 40.0, lrBalance: 1.8, tbBalance: 0.6, status: 'Normal' },
+            { id: 'WGN-050', volume: 55.1, weight: 47.9, lrBalance: 3.7, tbBalance: 1.2, status: 'Normal' },
+            { id: 'WGN-051', volume: 76.1, weight: 53.4, lrBalance: 0.1, tbBalance: 1.5, status: 'Normal' },
+            { id: 'WGN-052', volume: 59.7, weight: 38.8, lrBalance: 1.5, tbBalance: 1.4, status: 'Normal' },
+            { id: 'WGN-053', volume: 79.1, weight: 47.1, lrBalance: 3.3, tbBalance: 2.4, status: 'Normal' },
+            { id: 'WGN-054', volume: 95.3, weight: 73.3, lrBalance: 4.2, tbBalance: 4.8, status: 'Overloaded' },
+            { id: 'WGN-055', volume: 75.5, weight: 50.8, lrBalance: 0.5, tbBalance: 1.8, status: 'Normal' },
+            { id: 'WGN-056', volume: 77.5, weight: 39.6, lrBalance: 3.9, tbBalance: 1.1, status: 'Normal' },
+            { id: 'WGN-057', volume: 67.2, weight: 54.1, lrBalance: 1.4, tbBalance: 2.5, status: 'Normal' },
+            { id: 'WGN-058', volume: 74.0, weight: 44.9, lrBalance: 1.6, tbBalance: 2.2, status: 'Normal' },
+            { id: 'WGN-059', volume: 75.4, weight: 37.8, lrBalance: 2.0, tbBalance: 0.9, status: 'Normal' },
+            { id: 'WGN-060', volume: 62.6, weight: 42.0, lrBalance: 2.6, tbBalance: 0.0, status: 'Normal' },
+            { id: 'WGN-061', volume: 75.8, weight: 57.0, lrBalance: 2.2, tbBalance: 1.0, status: 'Normal' },
+            { id: 'WGN-062', volume: 57.3, weight: 51.4, lrBalance: 2.2, tbBalance: 1.6, status: 'Normal' },
+            { id: 'WGN-063', volume: 58.6, weight: 43.9, lrBalance: 3.1, tbBalance: 1.7, status: 'Normal' },
+            { id: 'WGN-064', volume: 78.3, weight: 54.1, lrBalance: 4.0, tbBalance: 0.7, status: 'Normal' },
+            { id: 'WGN-065', volume: 67.4, weight: 43.3, lrBalance: 0.9, tbBalance: 1.7, status: 'Normal' },
+            { id: 'WGN-066', volume: 74.3, weight: 55.5, lrBalance: 1.4, tbBalance: 0.0, status: 'Normal' },
+            { id: 'WGN-067', volume: 63.6, weight: 40.5, lrBalance: 2.0, tbBalance: 1.4, status: 'Normal' },
+            { id: 'WGN-068', volume: 60.7, weight: 41.9, lrBalance: 3.6, tbBalance: 2.2, status: 'Normal' },
+            { id: 'WGN-069', volume: 62.4, weight: 52.2, lrBalance: 4.0, tbBalance: 0.5, status: 'Normal' },
+            { id: 'WGN-070', volume: 71.8, weight: 44.5, lrBalance: 1.8, tbBalance: 1.6, status: 'Normal' },
+            { id: 'WGN-071', volume: 74.1, weight: 58.3, lrBalance: 0.6, tbBalance: 0.4, status: 'Normal' },
+            { id: 'WGN-072', volume: 66.6, weight: 44.8, lrBalance: 6.8, tbBalance: 3.3, status: 'Unbalanced' },
+            { id: 'WGN-073', volume: 61.0, weight: 41.6, lrBalance: 3.1, tbBalance: 0.3, status: 'Normal' },
+            { id: 'WGN-074', volume: 71.7, weight: 51.8, lrBalance: 3.6, tbBalance: 0.7, status: 'Normal' },
+            { id: 'WGN-075', volume: 68.5, weight: 54.7, lrBalance: 2.3, tbBalance: 1.2, status: 'Normal' },
+            { id: 'WGN-076', volume: 67.0, weight: 49.7, lrBalance: 2.2, tbBalance: 0.9, status: 'Normal' },
+            { id: 'WGN-077', volume: 75.9, weight: 39.4, lrBalance: 3.6, tbBalance: 1.3, status: 'Normal' },
+            { id: 'WGN-078', volume: 60.9, weight: 55.6, lrBalance: 3.3, tbBalance: 2.2, status: 'Normal' },
+            { id: 'WGN-079', volume: 61.9, weight: 37.3, lrBalance: 3.2, tbBalance: 2.2, status: 'Normal' },
+            { id: 'WGN-080', volume: 56.3, weight: 39.0, lrBalance: 1.4, tbBalance: 0.0, status: 'Normal' },
+            { id: 'WGN-081', volume: 71.2, weight: 59.7, lrBalance: 0.6, tbBalance: 1.7, status: 'Normal' },
+            { id: 'WGN-082', volume: 67.1, weight: 59.6, lrBalance: 3.4, tbBalance: 2.1, status: 'Normal' },
+            { id: 'WGN-083', volume: 62.1, weight: 59.4, lrBalance: 0.8, tbBalance: 1.2, status: 'Normal' },
+            { id: 'WGN-084', volume: 65.2, weight: 57.5, lrBalance: 7.5, tbBalance: 5.0, status: 'Unbalanced' },
+            { id: 'WGN-085', volume: 61.0, weight: 35.1, lrBalance: 1.6, tbBalance: 1.1, status: 'Normal' },
+            { id: 'WGN-086', volume: 56.4, weight: 53.7, lrBalance: 3.2, tbBalance: 1.7, status: 'Normal' },
+            { id: 'WGN-087', volume: 63.4, weight: 52.8, lrBalance: 1.7, tbBalance: 1.2, status: 'Normal' }
+        ];
+
+        // --- CHART & TABLE RENDERING ---
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Define Colors for Charts and Badges ---
+            const statusColors = {
+                Normal: { bg: 'rgba(34, 197, 94, 0.2)', border: 'rgb(34, 197, 94)' },     // Green
+                Overloaded: { bg: 'rgba(239, 68, 68, 0.2)', border: 'rgb(239, 68, 68)' }, // Red
+                Unbalanced: { bg: 'rgba(234, 179, 8, 0.2)', border: 'rgb(234, 179, 8)' }, // Yellow
+                Empty: { bg: 'rgba(107, 114, 128, 0.2)', border: 'rgb(107, 114, 128)' }  // Gray
+            };
+            
+            const tailwindColors = {
+                 gray: '#9ca3af', // text-gray-400
+                 blue: '#3b82f6',
+                 purple: '#8b5cf6'
+            };
+
+            // --- 1. Populate Wagon Table ---
+            const tableBody = document.getElementById('wagon-table-body');
+            wagonData.forEach((wagon) => {
+                const statusColorClasses = {
+                    Normal: 'bg-green-500/10 text-green-400',
+                    Overloaded: 'bg-red-500/10 text-red-400',
+                    Unbalanced: 'bg-yellow-500/10 text-yellow-400',
+                    Empty: 'bg-gray-500/10 text-gray-400'
+                };
+                const row = `
+                    <tr class="border-b border-gray-700 hover:bg-gray-700/50">
+                        <td class="px-6 py-4 font-medium text-white">${wagon.id}</td>
+                        <td class="px-6 py-4">${wagon.volume}</td>
+                        <td class="px-6 py-4">${wagon.weight}</td>
+                        <td class="px-6 py-4">${wagon.lrBalance}</td>
+                        <td class="px-6 py-4">${wagon.tbBalance}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${statusColorClasses[wagon.status] || 'bg-gray-200'}">
+                                ${wagon.status}
+                            </span>
+                        </td>
+                    </tr>`;
+                tableBody.innerHTML += row;
+            });
+
+
+            // --- 2. Initialize Charts ---
+            const ctxPie = document.getElementById('statusPieChart').getContext('2d');
+            const ctxScatter = document.getElementById('weightVolumeScatterPlot').getContext('2d');
+            const ctxLine = document.getElementById('balanceTrendLineChart').getContext('2d');
+
+            // --- Chart Default Options ---
+            Chart.defaults.color = tailwindColors.gray;
+            Chart.defaults.borderColor = '#374151'; // border-gray-700
+            Chart.defaults.font.family = "'Inter', sans-serif";
+
+            // --- Pie Chart: Wagon Status Distribution ---
+            const statusCounts = wagonData.reduce((acc, wagon) => {
+                acc[wagon.status] = (acc[wagon.status] || 0) + 1;
+                return acc;
+            }, {});
+
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        label: 'Wagon Status',
+                        data: Object.values(statusCounts),
+                        backgroundColor: Object.keys(statusCounts).map(status => statusColors[status].bg),
+                        borderColor: Object.keys(statusCounts).map(status => statusColors[status].border),
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                             labels: {
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- Scatter Plot: Weight vs Volume ---
+            const scatterData = wagonData.map(wagon => ({
+                x: wagon.volume,
+                y: wagon.weight,
+                status: wagon.status
+            }));
+
+            new Chart(ctxScatter, {
+                type: 'scatter',
+                data: {
+                    datasets: Object.keys(statusColors).map(status => ({
+                        label: status,
+                        data: scatterData.filter(d => d.status === status),
+                        backgroundColor: statusColors[status].border,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Volume (m³)', color: tailwindColors.gray },
+                            grid: { color: '#374151' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Weight (tons)', color: tailwindColors.gray },
+                            grid: { color: '#374151' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    label += `(${context.parsed.x} m³, ${context.parsed.y} tons)`;
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- Line Chart: Balance Deviation Trend ---
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: wagonData.map(w => w.id.replace('WGN-','')),
+                    datasets: [
+                        {
+                            label: 'L-R Balance (%)',
+                            data: wagonData.map(w => w.lrBalance),
+                            borderColor: tailwindColors.blue,
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'T-B Balance (%)',
+                            data: wagonData.map(w => w.tbBalance),
+                            borderColor: tailwindColors.purple,
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Wagon Number', color: tailwindColors.gray },
+                            grid: { display: false }
+                        },
+                        y: {
+                            title: { display: true, text: 'Deviation (%)', color: tailwindColors.gray },
+                            grid: { color: '#374151' } 
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                }
+            });
+
+        });
+    </script>
+
+</body>
+</html>

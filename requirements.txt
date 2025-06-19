@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+open3d
+numpy
+pandas
+weasyprint
+boto3
+matplotlib
+jinja2
+python-dotenv
+qrcode
+pytest 

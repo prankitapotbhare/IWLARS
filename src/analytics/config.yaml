@@ -1,0 +1,4 @@
+density: 2.5  # Example: tons per m^3
+empty_threshold: 0.1
+overload_threshold: 1.2
+unbalanced_threshold: 0.15 
