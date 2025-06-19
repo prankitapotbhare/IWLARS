@@ -24,7 +24,7 @@ flowchart LR
 1. **Data Acquisition**
     - **Sensors:** LiDAR and IMU sensors are mounted trackside at a checkpoint. As a train passes, these capture high-frequency point cloud and motion data.
     - **Edge Device:** An on-site computer (edge device) receives the sensor stream in real time.
-    - **Simulation:** For development/testing, sequential `.pcd` (LiDAR) and `.csv` (IMU) files are placed in `data/raw/frames/` and loaded at fixed intervals to mimic real-time arrival.
+    - **Simulation:** For development/testing, sequential `.pcd`, `.las` (LiDAR) and `.csv` (IMU) files are placed in `data/raw/frames/` and loaded at fixed intervals to mimic real-time arrival.
 
 2. **Preprocessing**
     - **Ground & Noise Filtering:**

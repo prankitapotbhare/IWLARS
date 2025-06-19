@@ -21,7 +21,7 @@ Building IWLARS involves a structured, phased approach. The development can be b
 
 **Week 1: Environment & Sensor I/O**
 1.  **Project Setup:** Initialize a Git repository, create the folder structure (`src`, `tests`, `docs`), and define dependencies in `requirements.txt`.
-2.  **Sensor Simulation:** Implement a data loader in `src/sensors/data_loader.py` to read sample LiDAR (.pcd) and IMU (.csv) files. This simulates real-time data input.
+2.  **Sensor Simulation:** Implement a data loader in `src/sensors/data_loader.py` to read sample LiDAR (.pcd, .las) and IMU (.csv) files. This simulates real-time data input.
 3.  **Initial Validation:** Write a basic script in `src/main.py` to load and visualize a point cloud using Open3D to ensure the environment is working correctly.
 
 **Week 2: Preprocessing & Segmentation**
@@ -55,7 +55,7 @@ iwlars/
 │   └── utils.py            # Shared utility functions
 │
 ├── data/                   # Sample and generated data
-│   ├── raw/                # Raw sensor data for simulation
+│   ├── raw/                # Raw sensor data for simulation (.pcd, .las, .csv)
 │   ├── processed/          # Intermediate data (e.g., segmented wagons)
 │   └── reports/            # Final generated PDF reports
 │

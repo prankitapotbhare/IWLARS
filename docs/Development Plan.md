@@ -14,7 +14,7 @@ Development is structured into four major phases, each with clear deliverables a
   - Define dependencies in `requirements.txt` (Open3D, NumPy, Pandas, FastAPI, Matplotlib, WeasyPrint, etc.).
   - Establish folder structure: `src/`, `tests/`, `docs/`, `data/`.
 - **Sensor Simulation:**
-  - Implement file-based data loader in `src/sensors/data_loader.py` for LiDAR (.pcd) and IMU (.LAS) files.
+  - Implement file-based data loader in `src/sensors/data_loader.py` for LiDAR (.pcd, .las) and IMU (.CSV) files.
   - Optionally, add socket-based loader for real-time simulation.
 - **Validation:**
   - Write a script in `src/main.py` to load and visualize point clouds using Open3D.
